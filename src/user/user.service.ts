@@ -35,6 +35,39 @@ export class UserService {
     });
     return user;
   }
+  async toggleFavorite(productId: string, userId: string): Promise<boolean> {
+    try {
+      const user = await this.getById(userId);
+
+      // Проверяем, что пользователь найден
+      if (!user) {
+        console.error(`User with ID ${userId} not found.`);
+        return false;
+      }
+
+      const isExist = user.favorites?.some(
+        product => product.id === productId
+      ) ?? false;
+
+      await this.prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          favorites: {
+            [isExist ? 'disconnect' : 'connect']: {
+              id: productId,
+            }
+          }
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      return false;
+    }
+  }
 
   async create(dto: AuthDto): Promise<User> {
     return this.prisma.user.create({
